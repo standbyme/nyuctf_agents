@@ -23,8 +23,8 @@ dependencies = [
   "anthropic",
   "rich",
   "pyyaml",
-#  "bs4",
-#  "jinja2",
+  #  "bs4",
+  #  "jinja2",
   "docker",
   "tabulate",
   "backoff",
@@ -32,7 +32,8 @@ dependencies = [
   "tiktoken",
   "nyuctf",
   "google-generativeai",
-  "together"
+  "together",
+  "python-dotenv>=1.2.1",
 ]
 
 [project.urls]
