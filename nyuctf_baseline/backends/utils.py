@@ -42,7 +42,7 @@ def parse_keys(key_path=None):
                 line = line.split("=")
                 keys[line[0].strip() + "_API_KEY"] = line[1].strip()
         return keys
-    except FileExistsError:
+    except:
         return None
 
 def fix_xml_seqs(seqs : List[str]) -> List[str]:
