@@ -39,7 +39,7 @@ from .skill_loader import (
 
 __all__ = [
     'Skill',
-    'SkillMetadata', 
+    'SkillMetadata',
     'SkillManager',
     'discover_skills',
     'generate_available_skills_xml',

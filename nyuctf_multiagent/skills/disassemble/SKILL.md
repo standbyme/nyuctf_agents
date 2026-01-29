@@ -66,6 +66,8 @@ Returns a JSON object with:
 
 - `main` - Main entry point
 - `_start` - Program entry point
+- `invoke_main` - Alternative main entry
+- `entry` - Generic entry point
 - `check_password` - Authentication functions
 - `read_input` - Input handling functions
 - `process_data` - Data processing functions

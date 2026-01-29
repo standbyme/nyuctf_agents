@@ -36,7 +36,7 @@ summary: "Analysis complete. The binary 'challenge' is a 64-bit ELF executable w
 
 ### Report partial progress
 ```
-summary: "Examined the challenge server protocol. The server expects a username followed by a password. Found that the authentication can be bypassed using SQL injection in the username field. Payload 'admin' OR '1'='1' -- grants access. Additional analysis needed to find the flag location."
+summary: "Examined the challenge server protocol. The server expects a username followed by a password. Found that the authentication can be bypassed using SQL injection in the username field. Payload `admin' OR '1'='1' --` grants access. Additional analysis needed to find the flag location."
 ```
 
 ### Report findings with code

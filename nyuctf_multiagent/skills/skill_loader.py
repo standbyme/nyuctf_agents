@@ -4,11 +4,19 @@ This module provides utilities for discovering, parsing, and using skills
 following the Agent Skills specification.
 """
 
+import logging
 import re
 import yaml
+from html import escape as xml_escape
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Optional, Dict, List
+
+logger = logging.getLogger(__name__)
+
+# Minimum word length for keyword matching in skill descriptions
+MIN_KEYWORD_LENGTH = 3
+
 
 @dataclass
 class SkillMetadata:
@@ -110,6 +118,16 @@ def load_skill_metadata(skill_path: Path) -> SkillMetadata:
 def load_skill(skill_path: Path) -> Skill:
     """
     Load a complete skill including metadata and instructions.
+    
+    Args:
+        skill_path: Path to the skill directory
+        
+    Returns:
+        Skill object with metadata and instructions
+        
+    Raises:
+        FileNotFoundError: If SKILL.md is not found in the skill directory
+        ValueError: If the skill metadata is invalid
     """
     skill_md = skill_path / "SKILL.md"
     if not skill_md.exists():
@@ -118,7 +136,29 @@ def load_skill(skill_path: Path) -> Skill:
     content = skill_md.read_text()
     frontmatter, body = parse_frontmatter(content)
     
-    metadata = load_skill_metadata(skill_path)
+    # Validate required fields
+    if 'name' not in frontmatter:
+        raise ValueError(f"Missing required 'name' field in {skill_md}")
+    if 'description' not in frontmatter:
+        raise ValueError(f"Missing required 'description' field in {skill_md}")
+    
+    name = frontmatter['name']
+    if not validate_skill_name(name):
+        raise ValueError(f"Invalid skill name '{name}' in {skill_md}")
+    
+    # Check that name matches directory name
+    if skill_path.name != name:
+        raise ValueError(f"Skill name '{name}' does not match directory name '{skill_path.name}'")
+    
+    metadata = SkillMetadata(
+        name=name,
+        description=frontmatter['description'],
+        path=skill_path,
+        license=frontmatter.get('license'),
+        compatibility=frontmatter.get('compatibility'),
+        metadata=frontmatter.get('metadata'),
+        allowed_tools=frontmatter.get('allowed-tools')
+    )
     
     return Skill(
         metadata=metadata,
@@ -145,7 +185,7 @@ def discover_skills(skills_dir: Path) -> List[SkillMetadata]:
                     skills.append(metadata)
                 except (ValueError, FileNotFoundError) as e:
                     # Log warning but continue discovering other skills
-                    print(f"Warning: Failed to load skill from {item}: {e}")
+                    logger.warning(f"Failed to load skill from {item}: {e}")
     
     return skills
 
@@ -165,10 +205,10 @@ def generate_available_skills_xml(skills: List[SkillMetadata], include_location:
     
     for skill in skills:
         lines.append('  <skill>')
-        lines.append(f'    <name>{skill.name}</name>')
-        lines.append(f'    <description>{skill.description}</description>')
+        lines.append(f'    <name>{xml_escape(skill.name)}</name>')
+        lines.append(f'    <description>{xml_escape(skill.description)}</description>')
         if include_location:
-            lines.append(f'    <location>{skill.path.absolute()}/SKILL.md</location>')
+            lines.append(f'    <location>{xml_escape(str(skill.path.absolute()))}/SKILL.md</location>')
         lines.append('  </skill>')
     
     lines.append('</available_skills>')
@@ -233,10 +273,21 @@ class SkillManager:
     def match_skill(self, task_description: str) -> Optional[SkillMetadata]:
         """
         Simple keyword-based skill matching.
-        Returns the best matching skill or None.
         
-        Note: In a production system, this would use more sophisticated
-        matching (embeddings, LLM-based selection, etc.)
+        Performs case-insensitive keyword matching between the task description
+        and available skill names/descriptions. Words from skill names receive
+        higher weight (2 points) than description words (1 point).
+        
+        Args:
+            task_description: The task or query to match against available skills
+            
+        Returns:
+            The SkillMetadata of the best matching skill, or None if no skill
+            matches (i.e., no keywords from any skill are found in the task).
+        
+        Note:
+            In a production system, this would use more sophisticated
+            matching (embeddings, LLM-based selection, etc.)
         """
         task_lower = task_description.lower()
         
@@ -254,7 +305,7 @@ class SkillManager:
                     score += 2
             
             for word in desc_words:
-                if len(word) > 3 and word in task_lower:
+                if len(word) > MIN_KEYWORD_LENGTH and word in task_lower:
                     score += 1
             
             if score > best_score:
