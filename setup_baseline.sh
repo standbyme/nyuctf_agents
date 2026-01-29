@@ -22,4 +22,4 @@ fi
 
 cd -
 echo "Installing python dependencies"
-pip install -r requirements.txt
+uv pip install -r requirements.txt
