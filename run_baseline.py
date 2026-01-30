@@ -8,6 +8,9 @@ import argparse
 import shutil
 import yaml
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from nyuctf.dataset import CTFDataset
 from nyuctf.challenge import CTFChallenge

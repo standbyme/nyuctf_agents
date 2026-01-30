@@ -29,6 +29,11 @@
             "max_context": 128000,
             "cost_per_input_token": 1.5e-07,
             "cost_per_output_token": 6e-07
+        },
+        "gpt-5-nano-2025-08-07": {
+            "max_context": 128000,
+            "cost_per_input_token": 5e-08,
+            "cost_per_output_token": 4e-07
         }
     },
     "anthropic": {
